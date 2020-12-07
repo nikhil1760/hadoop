@@ -1,0 +1,47 @@
+- hosts: all
+  vars_files:
+          - vartask11.yml
+  tasks:
+          - copy:
+                  src: "/root/jdk-8u171-linux-x64.rpm"
+                  dest:  "/root"
+          - copy:
+                  src: "/root/hadoop-1.2.1-1.x86_64.rpm"
+                  dest: "/root"
+          - command: "rpm -ihv hadoop-1.2.1-1.x86_64.rpm --force"
+                 
+          - command: "rpm -ihv jdk-8u171-linux-x64.rpm --force" 
+          - service:
+                  name: firewalld
+                  state: stopped
+          - template: 
+                  src: "cpdata.xml"
+                  dest: "/etc/hadoop/core-site.xml"
+- hosts: namenode
+  vars_prompt:
+          - name: namedir
+            private: no
+            prompt: "Enter the name of directory in namenode"
+  tasks: 
+          - file:
+                  state: directory
+                  path: "/{{namedir}}"
+          - template:
+                  src: "hdmaster.xml"
+                  dest: "/etc/hadoop/hdfs-site.xml"
+          - command: "hadoop namenode -format -force " 
+          - command: "hadoop-daemon.sh start namenode"
+                  
+- hosts: datanode
+  vars_prompt:
+            name: datadir
+            private: no
+            prompt: "Enter the name of directory in datanode"
+  tasks: 
+          - file:
+                  state: directory
+                  path: "/{{datadir}}"
+          - template:
+                  src: "hddata.xml"
+                  dest: "/etc/hadoop/hdfs-site.xml"
+          - command: "hadoop-daemon.sh start datanode"
